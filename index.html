@@ -63,11 +63,56 @@ body{margin:0;font-family:"Segoe UI","Arial Hebrew",Arial,sans-serif;background:
 .pin.hotel{background:#1565c0;font-size:14px;}
 footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1.6;}
 .leaflet-container{font:inherit;}
+
+/* EXPENSES_CSS */
+.money-btn{position:absolute;top:calc(14px + env(safe-area-inset-top));left:16px;width:42px;height:42px;border-radius:12px;border:0;background:rgba(255,255,255,.22);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.money-btn:active{background:rgba(255,255,255,.36);}
+.exp-overlay{position:fixed;inset:0;z-index:2000;background:var(--bg);display:none;flex-direction:column;max-width:540px;margin:0 auto;}
+.exp-overlay.show{display:flex;}
+.exp-top{background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+.exp-top h2{margin:0;font-size:18px;font-weight:800;}
+.exp-close{background:rgba(255,255,255,.2);border:0;color:#fff;width:34px;height:34px;border-radius:10px;font-size:18px;cursor:pointer;}
+.exp-body{flex:1;overflow-y:auto;padding:14px;}
+.exp-tot{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);margin-bottom:12px;text-align:center;}
+.exp-tot .big{font-size:25px;font-weight:800;color:#1b5e20;}
+.exp-tot .sub{font-size:13px;color:var(--muted);margin-top:3px;}
+.exp-cats{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:9px;font-size:12px;color:#5d4037;}
+.exp-cats span{background:#f1f7f1;border-radius:12px;padding:3px 8px;}
+.exp-add{display:block;width:100%;background:#1b5e20;color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px;}
+.exp-list{display:flex;flex-direction:column;gap:8px;}
+.exp-item{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 5px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;}
+.exp-item .ic{font-size:22px;flex:0 0 auto;}
+.exp-item .mid{flex:1;min-width:0;}
+.exp-item .pl{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.exp-item .mt{font-size:12px;color:var(--muted);}
+.exp-item .amt{font-weight:800;color:#1b5e20;white-space:nowrap;}
+.exp-item img.rc{width:38px;height:38px;object-fit:cover;border-radius:8px;flex:0 0 auto;}
+.exp-item .del{background:#fde8e8;border:0;color:#c62828;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;flex:0 0 auto;}
+.exp-empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px;}
+.exp-form{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:12px;display:none;}
+.exp-form.show{display:block;}
+.exp-form label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:8px 2px 4px;}
+.exp-form input[type=text],.exp-form input[type=number],.exp-form input[type=date]{width:100%;border:1px solid #d7e0d7;border-radius:10px;padding:10px;font-size:16px;font-family:inherit;background:#fafdf8;}
+.exp-form input[type=file]{width:100%;font-size:13px;}
+.exp-fr{display:flex;gap:8px;align-items:flex-end;}
+.exp-fr>div:first-child{flex:1;}
+.curr-tog,.cat-tog{display:flex;flex-wrap:wrap;gap:6px;}
+.chip-sel{border:1px solid #d7e0d7;background:#f4faf4;border-radius:20px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;}
+.chip-sel.on{background:#1b5e20;color:#fff;border-color:#1b5e20;}
+.exp-actions{display:flex;gap:8px;margin-top:12px;}
+.exp-actions button{flex:1;border:0;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;}
+.btn-save{background:#1b5e20;color:#fff;}
+.btn-cancel{background:#ececec;color:#333;}
+.rc-prev{margin-top:8px;display:none;}
+.rc-prev img{width:100%;max-height:180px;object-fit:contain;border-radius:10px;background:#f0f0f0;}
+.ocr-btn{margin-top:6px;width:100%;background:#eef5ee;border:1px solid #cfe2cf;color:#1b5e20;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;}
+.ocr-note{font-size:11px;color:var(--muted);margin-top:5px;text-align:center;min-height:14px;}
+/* END_EXPENSES_CSS */
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="appbar">
+  <div class="appbar"><button class="money-btn" id="moneyBtn" aria-label="הוצאות">💰</button>
     <h1>🏔️ משפחת גולדפרב</h1>
     <div class="sub">טיול משפחתי · אוסטריה · יולי 2026</div>
     <div class="meta">20–29.07 · Sporthotel Royer, Schladming · 👨‍👩‍👧‍👦 5 נפשות</div>
@@ -320,6 +365,114 @@ DAYS.forEach(function(day,i){
   });
 });
 </script>
+
+<!-- EXPENSES_MODAL -->
+<div class="exp-overlay" id="expOverlay">
+  <div class="exp-top">
+    <h2>💰 הוצאות הטיול</h2>
+    <button class="exp-close" id="expClose">✕</button>
+  </div>
+  <div class="exp-body">
+    <div class="exp-tot"><div class="big" id="expTotal">0 €</div><div class="sub">סה"כ הוצאות</div><div class="exp-cats" id="expCats"></div></div>
+    <button class="exp-add" id="expAddBtn">➕ הוצאה חדשה</button>
+    <div class="exp-form" id="expForm">
+      <div class="exp-fr">
+        <div><label>סכום</label><input type="number" inputmode="decimal" id="fAmount" placeholder="0.00"></div>
+        <div><label>מטבע</label><div class="curr-tog" id="fCurr"><span class="chip-sel on" data-c="€">€</span><span class="chip-sel" data-c="₪">₪</span></div></div>
+      </div>
+      <label>קטגוריה</label>
+      <div class="cat-tog" id="fCat"></div>
+      <label>מקום / נושא</label>
+      <input type="text" id="fPlace" placeholder="למשל: ארוחת צהריים · Werfen">
+      <label>תאריך</label>
+      <input type="date" id="fDate">
+      <label>חשבונית (אופציונלי — אפשר לצלם)</label>
+      <input type="file" accept="image/*" capture="environment" id="fReceipt">
+      <div class="rc-prev" id="rcPrev"><img id="rcImg" alt=""><button class="ocr-btn" id="ocrBtn">✨ נסה למלא אוטומטית מהחשבונית</button><div class="ocr-note" id="ocrNote"></div></div>
+      <div class="exp-actions"><button class="btn-save" id="fSave">שמור</button><button class="btn-cancel" id="fCancel">בטל</button></div>
+    </div>
+    <div class="exp-list" id="expList"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='goldfarb_expenses_v1';
+  var CATS=[['🍽️','אוכל'],['⛽','דלק'],['🎢','אטרקציות'],['🛍️','קניות'],['🏨','לינה'],['🅿️','חניה'],['🚗','רכב'],['📦','אחר']];
+  var state={items:[],curr:'€',cat:'אוכל',receipt:''};
+  var $=function(id){return document.getElementById(id);};
+  function load(){try{state.items=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){state.items=[];}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state.items));}catch(e){alert('אין מספיק מקום לשמור. נסו להסיר חשבוניות ישנות.');}}
+  function icon(cat){for(var i=0;i<CATS.length;i++){if(CATS[i][1]===cat)return CATS[i][0];}return '📦';}
+  function fmt(n){return (Math.round(n*100)/100).toLocaleString('he-IL');}
+  var catBox=$('fCat');
+  CATS.forEach(function(c){var s=document.createElement('span');s.className='chip-sel'+(c[1]===state.cat?' on':'');s.textContent=c[0]+' '+c[1];s.onclick=function(){state.cat=c[1];for(var k=0;k<catBox.children.length;k++)catBox.children[k].classList.remove('on');s.classList.add('on');};catBox.appendChild(s);});
+  var currBox=$('fCurr');
+  for(var i=0;i<currBox.children.length;i++){(function(x){x.onclick=function(){state.curr=x.getAttribute('data-c');for(var k=0;k<currBox.children.length;k++)currBox.children[k].classList.remove('on');x.classList.add('on');};})(currBox.children[i]);}
+  function render(){
+    var list=$('expList');list.innerHTML='';
+    if(!state.items.length){list.innerHTML='<div class="exp-empty">אין הוצאות עדיין.<br>לחצו "➕ הוצאה חדשה" כדי להתחיל.</div>';}
+    var totals={};var counts={};
+    state.items.slice().reverse().forEach(function(it){
+      totals[it.curr]=(totals[it.curr]||0)+Number(it.amount);
+      counts[it.cat]=(counts[it.cat]||0)+1;
+      var d=document.createElement('div');d.className='exp-item';
+      d.innerHTML='<span class="ic">'+icon(it.cat)+'</span>'+(it.receipt?'<img class="rc" src="'+it.receipt+'">':'')+'<div class="mid"><div class="pl">'+((it.place||it.cat).replace(/</g,'&lt;'))+'</div><div class="mt">'+it.cat+(it.date?' · '+it.date:'')+'</div></div><span class="amt">'+fmt(it.amount)+' '+it.curr+'</span><button class="del" data-id="'+it.id+'">🗑️</button>';
+      list.appendChild(d);
+    });
+    var parts=Object.keys(totals).map(function(c){return fmt(totals[c])+' '+c;});
+    $('expTotal').textContent=parts.length?parts.join('   ·   '):'0 €';
+    var cats=$('expCats');cats.innerHTML='';
+    Object.keys(counts).forEach(function(k){var s=document.createElement('span');s.textContent=icon(k)+' ×'+counts[k];cats.appendChild(s);});
+    var dels=list.querySelectorAll('.del');
+    for(var j=0;j<dels.length;j++){(function(b){b.onclick=function(){var id=b.getAttribute('data-id');state.items=state.items.filter(function(x){return String(x.id)!==String(id);});save();render();};})(dels[j]);}
+  }
+  function openForm(){$('expForm').classList.add('show');if(!$('fDate').value)$('fDate').value=new Date().toISOString().slice(0,10);$('fAmount').focus();}
+  function closeForm(){$('expForm').classList.remove('show');$('fAmount').value='';$('fPlace').value='';$('fReceipt').value='';$('rcPrev').style.display='none';state.receipt='';$('ocrNote').textContent='';}
+  $('moneyBtn').onclick=function(){$('expOverlay').classList.add('show');render();};
+  $('expClose').onclick=function(){$('expOverlay').classList.remove('show');};
+  $('expAddBtn').onclick=openForm;
+  $('fCancel').onclick=closeForm;
+  $('fSave').onclick=function(){
+    var amt=parseFloat($('fAmount').value);
+    if(!amt||amt<=0){$('fAmount').focus();return;}
+    state.items.push({id:Date.now(),amount:amt,curr:state.curr,cat:state.cat,place:$('fPlace').value.trim(),date:$('fDate').value,receipt:state.receipt});
+    save();closeForm();render();
+  };
+  $('fReceipt').onchange=function(e){
+    var f=e.target.files[0];if(!f)return;
+    var rd=new FileReader();
+    rd.onload=function(){var img=new Image();img.onload=function(){
+      var mx=1000,sc=Math.min(1,mx/Math.max(img.width,img.height));
+      var cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      state.receipt=cv.toDataURL('image/jpeg',0.55);
+      $('rcImg').src=state.receipt;$('rcPrev').style.display='block';
+    };img.src=rd.result;};
+    rd.readAsDataURL(f);
+  };
+  $('ocrBtn').onclick=function(){
+    if(!state.receipt)return;
+    var note=$('ocrNote');
+    function run(){
+      note.textContent='קורא את החשבונית…';
+      Tesseract.recognize(state.receipt,'deu+eng').then(function(r){
+        var text=(r.data.text||'');
+        var nums=(text.match(/\d+[.,]\d{2}/g)||[]).map(function(s){return parseFloat(s.replace(/\./g,'').replace(',','.'));}).filter(function(n){return n>0&&n<100000;});
+        var total=nums.length?Math.max.apply(null,nums):null;
+        var dm=text.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/);
+        if(total)$('fAmount').value=total;
+        if(dm){var y=dm[3].length===2?'20'+dm[3]:dm[3];$('fDate').value=y+'-'+('0'+dm[2]).slice(-2)+'-'+('0'+dm[1]).slice(-2);}
+        note.textContent=total?('סכום משוער: '+total+' — בדקו ותקנו לפי הצורך'):'לא זוהה סכום ברור — מלאו ידנית';
+      }).catch(function(){note.textContent='לא הצליח לקרוא את החשבונית — מלאו ידנית';});
+    }
+    if(window.Tesseract){run();}
+    else{note.textContent='טוען מנוע קריאה… (דורש אינטרנט בפעם הראשונה)';var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=run;s.onerror=function(){note.textContent='אין חיבור לטעינת מנוע הקריאה';};document.head.appendChild(s);}
+  };
+  load();
+})();
+</script>
+<!-- END_EXPENSES -->
+
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 </script>
