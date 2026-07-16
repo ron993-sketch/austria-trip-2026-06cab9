@@ -50,7 +50,8 @@ body{margin:0;font-family:"Segoe UI","Arial Hebrew",Arial,sans-serif;background:
 .ev .a{flex:1;}
 .map{width:100%;height:240px;border-radius:12px;overflow:hidden;margin:2px 0 8px;background:#dfe7df;}
 .dist{font-size:13px;font-weight:700;color:var(--green-d);margin:0 2px 10px;}
-.navbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:#1a73e8;color:#fff;text-decoration:none;padding:13px;border-radius:12px;font-weight:800;font-size:15px;margin-bottom:10px;box-shadow:0 2px 8px rgba(26,115,232,.3);}
+.navbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:#00b3e6;color:#fff;text-decoration:none;padding:13px;border-radius:12px;font-weight:800;font-size:15px;margin-bottom:6px;box-shadow:0 2px 8px rgba(0,179,230,.32);}
+.gmap-link{display:block;text-align:center;color:#1a73e8;font-size:12.5px;font-weight:700;text-decoration:none;margin-bottom:10px;}
 .navbtn:active{background:#1558b0;transform:translateY(1px);}
 .chips-lbl{font-size:12px;color:var(--muted);font-weight:700;margin:2px 2px 6px;}
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;}
@@ -152,7 +153,7 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
       </div>
     </details>
     <div id="days"></div>
-    <footer>הופק עבור משפחת Goldfarb · לחיצה על "נווט" פותחת את Google Maps · תמונות: Wikimedia Commons</footer>
+    <footer>הופק עבור משפחת Goldfarb · לחיצה על "נווט" פותחת את Waze · תמונות: Wikimedia Commons</footer>
   </div>
 </div>
 
@@ -318,7 +319,7 @@ const DAYS = [
 
 function numIcon(n, hotel){return L.divIcon({className:"",html:'<div class="pin '+(hotel?"hotel":"")+'">'+(hotel?"🏨":n)+'</div>',iconSize:[26,26],iconAnchor:[13,13]});}
 function gmapsUrl(wps){var o=wps[0].lat+","+wps[0].lng;var d=wps[wps.length-1].lat+","+wps[wps.length-1].lng;var mid=wps.slice(1,-1).map(function(w){return w.lat+","+w.lng;}).join("|");var u="https://www.google.com/maps/dir/?api=1&origin="+o+"&destination="+d+"&travelmode=driving";if(mid)u+="&waypoints="+encodeURIComponent(mid);return u;}
-function stopNav(w){return "https://www.google.com/maps/dir/?api=1&destination="+w.lat+","+w.lng+"&travelmode=driving";}
+function stopNav(w){return "https://waze.com/ul?ll="+w.lat+","+w.lng+"&navigate=yes";}
 async function drawRoute(map,wps,distEl,group){
   var coordStr=wps.map(function(w){return w.lng+","+w.lat;}).join(";");
   var url="https://router.project-osrm.org/route/v1/driving/"+coordStr+"?overview=full&geometries=geojson";
@@ -356,7 +357,8 @@ DAYS.forEach(function(day,i){
   var seen={};
   var uniq=day.wps.filter(function(w){if(seen[w.name])return false;seen[w.name]=1;return true;});
   var chips=uniq.map(function(w){return '<a class="chip '+(w.hotel?"h":"")+'" target="_blank" rel="noopener" href="'+stopNav(w)+'">'+(w.hotel?"🏨 המלון":"📍 "+w.name)+'</a>';}).join("");
-  var routeBtn=single?"":'<a class="navbtn" target="_blank" rel="noopener" href="'+gmapsUrl(day.wps)+'">🧭 נווט למסלול המלא ב-Google Maps</a>';
+  var firstDest=day.wps.length>1?day.wps[1]:null;
+  var routeBtn=(single||!firstDest)?"":'<a class="navbtn" target="_blank" rel="noopener" href="'+stopNav(firstDest)+'">🚗 נווט ב-Waze אל: '+firstDest.name+'</a><a class="gmap-link" target="_blank" rel="noopener" href="'+gmapsUrl(day.wps)+'">🗺️ המסלול המלא של היום (רב-עצירות) ב-Google Maps</a>';
   var card=document.createElement("div");
   card.className="day "+day.theme;
   card.innerHTML=''
@@ -371,7 +373,7 @@ DAYS.forEach(function(day,i){
     +'<div class="map" id="'+id+'"></div>'
     +'<div class="dist" id="dist'+i+'">'+(single?'🏨 יום במלון — אין נסיעה':'🚗 …')+'</div>'
     +routeBtn
-    +'<div class="chips-lbl">🧭 ניווט מהיר ליעד בודד:</div>'
+    +'<div class="chips-lbl">🚗 ניווט Waze ליעד בודד:</div>'
     +'<div class="chips">'+chips+'</div>'
     +'<p class="tip">'+day.tip+'</p>'
     +'<div class="cost">💰 '+day.cost+'</div>'
