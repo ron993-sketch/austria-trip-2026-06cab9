@@ -208,6 +208,20 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
 .cs-item button{background:#fde8e8;border:0;color:#c62828;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;}
 .cs-msg{font-size:12px;color:var(--muted);margin-top:6px;text-align:center;min-height:14px;}
 /* END_SITES_CSS */
+
+/* REORDER_CSS */
+.resetbar{display:none;align-items:center;justify-content:space-between;gap:8px;background:#fff8e1;border:1px solid #ffe0a3;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;color:#7a5b00;font-weight:700;}
+.resetbar.show{display:flex;}
+.resetbar button{background:#8d6e00;color:#fff;border:0;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.reorder{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:0 0 10px;border-bottom:1px dashed #dbe6db;margin-bottom:10px;font-size:12.5px;color:var(--muted);font-weight:700;}
+.reorder button{background:#eef5ee;border:1px solid #cfe2cf;color:#1b5e20;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;}
+.reorder button:active{background:#dcebdc;}
+.reorder button:disabled{opacity:.35;cursor:default;}
+.reorder .lock{color:#8d6e00;background:#fff8e1;border:1px solid #ffe0a3;border-radius:9px;padding:7px 10px;font-weight:700;}
+.daywarn{background:#ffebee;border-right:4px solid #c62828;color:#b71c1c;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin:0 0 10px;line-height:1.6;}
+.daywarn.soft{background:#fff8e1;border-right-color:#f9a825;color:#7a5b00;}
+.moved{font-size:11px;color:#8d6e00;background:#fff8e1;border-radius:8px;padding:2px 7px;}
+/* END_REORDER_CSS */
 </style>
 </head>
 <body>
@@ -231,7 +245,7 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
       </div>
     </details>
     <div id="days"></div>
-    <footer>הופק עבור משפחת Goldfarb · לחיצה על "נווט" פותחת את Waze · תמונות: Wikimedia Commons · <b>גרסה 15</b></footer>
+    <footer>הופק עבור משפחת Goldfarb · לחיצה על "נווט" פותחת את Waze · תמונות: Wikimedia Commons · <b>גרסה 16</b></footer>
   </div>
 </div>
 
@@ -1024,6 +1038,120 @@ DAYS.forEach(function(day,i){
 })();
 </script>
 <!-- END_SITES -->
+
+<!-- REORDER_BLOCK -->
+<script>
+(function(){
+  var KEY='goldfarb_day_order';
+  var root=document.getElementById('days');
+  var cards=Array.prototype.slice.call(document.querySelectorAll('.day'));
+  var N=cards.length; if(!N) return;
+  var byPlan=cards.slice();                       // byPlan[planIdx] = card element (DOM order at load = plan order)
+
+  // slot i keeps the date of the original day i
+  var SLOT_DATE=[], SLOT_WD=[];
+  for(var i=0;i<N;i++){
+    var p=(DAYS[i].title||'').split(' · ');
+    SLOT_DATE[i]=p[1]||''; SLOT_WD[i]=(p[1]||'').split(' ')[0]||'';
+  }
+  var PLAN_TITLE=[]; for(i=0;i<N;i++){var q=(DAYS[i].title||'').split(' · ');PLAN_TITLE[i]=q.slice(2).join(' · ');}
+
+  // hard locks: plan -> reason
+  var LOCK={};
+  LOCK[0]='טיסת ההגעה — מוצמד לתאריך הנחיתה';
+  LOCK[2]='הזמנת רכבל Dachstein משולמת ל-22.07 בשעה 09:00';
+  LOCK[N-1]='טיסת החזרה — מוצמד לתאריך הטיסה';
+  // weekday restrictions: plan -> {bad:[weekday], why}
+  var RULES={};
+  RULES[4]={bad:['ראשון','שני'],why:'ביום זה חלק מהיעדים סגורים: האאוטלט סגור בימי ראשון, ו-KTM Hauthaler ו-Ginzinger סגורים בימי שני.'};
+  RULES[7]={bad:['שלישי'],why:'Planai Adventure Park (פארק החבלים) סגור בימי שלישי.'};
+  var PREFER={}; PREFER[N-2]={slot:N-2,why:'יום המנוחה והאריזה עדיף שיישאר ערב הטיסה.'};
+
+  function def(){var a=[];for(var i=0;i<N;i++)a.push(i);return a;}
+  function load(){
+    try{var a=JSON.parse(localStorage.getItem(KEY)||'null');
+      if(a&&a.length===N){var s=a.slice().sort(function(x,y){return x-y;});
+        for(var i=0;i<N;i++)if(s[i]!==i)return def();
+        return a;}
+    }catch(e){}
+    return def();
+  }
+  function save(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+  var order=load();
+
+  function slotOf(plan){return order.indexOf(plan);}
+
+  function apply(){
+    // place cards in slot order and relabel slot number + date
+    for(var s=0;s<N;s++){
+      var plan=order[s], card=byPlan[plan];
+      root.appendChild(card);
+      var num=card.querySelector('.daynum'); if(num)num.textContent=String(s+1);
+      var dt=card.querySelector('.dh-date');
+      if(dt){
+        dt.innerHTML=SLOT_DATE[s]+(plan!==s?' <span class="moved">הוזז</span>':'');
+      }
+      var ti=card.querySelector('.dh-title'); if(ti)ti.textContent=PLAN_TITLE[plan];
+    }
+    renderControls();
+    document.querySelector('.resetbar').classList.toggle('show', order.some(function(p,s){return p!==s;}));
+  }
+
+  function renderControls(){
+    for(var s=0;s<N;s++){
+      (function(slot){
+        var plan=order[slot], card=byPlan[plan], det=card.querySelector('.day-detail');
+        if(!det) return;
+        var bar=det.querySelector('.reorder');
+        if(!bar){bar=document.createElement('div');bar.className='reorder';det.insertBefore(bar,det.firstChild);}
+        var warn=det.querySelector('.daywarn'); if(warn)warn.remove();
+
+        if(LOCK[plan]!==undefined){
+          bar.innerHTML='<span class="lock">🔒 יום קבוע</span><span>'+LOCK[plan]+'</span>';
+        } else {
+          var upPlan=slot>0?order[slot-1]:null, dnPlan=slot<N-1?order[slot+1]:null;
+          var canUp=slot>0&&LOCK[upPlan]===undefined, canDn=slot<N-1&&LOCK[dnPlan]===undefined;
+          bar.innerHTML='<span>🔀 הזזת היום:</span>';
+          var b1=document.createElement('button');b1.type='button';b1.textContent='↑ מוקדם יותר';b1.disabled=!canUp;
+          var b2=document.createElement('button');b2.type='button';b2.textContent='↓ מאוחר יותר';b2.disabled=!canDn;
+          b1.onclick=function(e){e.stopPropagation();swap(slot,slot-1);};
+          b2.onclick=function(e){e.stopPropagation();swap(slot,slot+1);};
+          bar.appendChild(b1);bar.appendChild(b2);
+        }
+
+        // warnings for this slot's weekday
+        var msg=null,soft=false;
+        var r=RULES[plan];
+        if(r&&r.bad.indexOf(SLOT_WD[slot])>-1){msg='⚠️ '+SLOT_WD[slot]+' — '+r.why;}
+        else if(PREFER[plan]&&slot!==PREFER[plan].slot){msg='ℹ️ '+PREFER[plan].why;soft=true;}
+        if(msg){
+          var w=document.createElement('div');w.className='daywarn'+(soft?' soft':'');w.textContent=msg;
+          det.insertBefore(w,bar.nextSibling);
+        }
+      })(s);
+    }
+  }
+
+  function swap(a,b){
+    if(a<0||b<0||a>=N||b>=N)return;
+    if(LOCK[order[a]]!==undefined||LOCK[order[b]]!==undefined)return;
+    var t=order[a];order[a]=order[b];order[b]=t;
+    save(order);apply();
+    byPlan[order[b]].scrollIntoView({block:'center'});
+  }
+
+  // reset bar above the day list
+  var rb=document.createElement('div');rb.className='resetbar';
+  rb.innerHTML='<span>🔀 שינית את סדר הימים. התאריכים נשארים קבועים — רק התוכן זז.</span>';
+  var rbtn=document.createElement('button');rbtn.type='button';rbtn.textContent='↺ אפס לסדר המקורי';
+  rbtn.onclick=function(){order=def();save(order);apply();};
+  rb.appendChild(rbtn);
+  root.parentNode.insertBefore(rb,root);
+
+  apply();
+})();
+</script>
+<!-- END_REORDER -->
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
