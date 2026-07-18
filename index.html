@@ -228,7 +228,7 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
       </div>
     </details>
     <div id="days"></div>
-    <footer>הופק עבור משפחת Goldfarb · לחיצה על "נווט" פותחת את Waze · תמונות: Wikimedia Commons</footer>
+    <footer>הופק עבור משפחת Goldfarb · לחיצה על "נווט" פותחת את Waze · תמונות: Wikimedia Commons · <b>גרסה 14</b></footer>
   </div>
 </div>
 
@@ -1015,6 +1015,25 @@ DAYS.forEach(function(day,i){
 </script>
 <!-- END_SITES -->
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    var hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      try{ reg.update(); }catch(e){}
+      setInterval(function(){ try{ reg.update(); }catch(e){} }, 60*60*1000);
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing; if(!nw)return;
+        nw.addEventListener('statechange',function(){
+          if(nw.state==='activated' && hadController){ location.reload(); }
+        });
+      });
+    }).catch(function(){});
+    var refreshing=false;
+    navigator.serviceWorker.addEventListener('controllerchange',function(){
+      if(refreshing || !hadController) return;
+      refreshing=true; location.reload();
+    });
+  });
+}
 </script>
 </body>
