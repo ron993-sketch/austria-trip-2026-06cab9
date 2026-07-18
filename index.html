@@ -132,12 +132,17 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
 /* END_DOCS_CSS */
 
 
+
 /* PHOTOS_CSS */
 .album-btn{position:absolute;top:calc(14px + env(safe-area-inset-top));left:116px;width:42px;height:42px;border-radius:12px;border:0;background:rgba(255,255,255,.22);color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .album-btn:active{background:rgba(255,255,255,.36);}
 .ph-box{border-top:1px dashed #dbe6db;margin-top:10px;padding-top:10px;}
-.ph-cam{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#fff3e0;border:1px solid #ffcc80;color:#bf360c;border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;}
-.ph-cam:active{background:#ffe6c7;}
+.ph-btns{display:flex;gap:8px;}
+.ph-b{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:12px 8px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;border:1px solid;}
+.ph-gal{background:#fff3e0;border-color:#ffcc80;color:#bf360c;}
+.ph-gal:active{background:#ffe6c7;}
+.ph-shot{background:#eef5ee;border-color:#cfe2cf;color:#1b5e20;}
+.ph-shot:active{background:#dcebdc;}
 .ph-strip{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;}
 .ph-strip img{width:64px;height:64px;object-fit:cover;border-radius:9px;flex:0 0 auto;cursor:pointer;}
 .ph-cnt{font-size:12px;color:var(--muted);margin-top:6px;font-weight:700;text-align:center;}
@@ -148,7 +153,8 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
 .alb-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;cursor:pointer;}
 .alb-grid .rm{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:7px;width:24px;height:24px;font-size:12px;cursor:pointer;}
 .alb-exp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#1b5e20;color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px;}
-.alb-empty{text-align:center;color:var(--muted);padding:34px 12px;font-size:14px;line-height:1.7;}
+.alb-empty{text-align:center;color:var(--muted);padding:30px 12px;font-size:14px;line-height:1.8;}
+.alb-tip{background:#fff8e1;border-right:4px solid #f9a825;padding:10px 12px;border-radius:10px;font-size:12.5px;color:#7a5b00;line-height:1.6;margin-bottom:12px;}
 .ph-view{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:3000;display:none;align-items:center;justify-content:center;flex-direction:column;}
 .ph-view.show{display:flex;}
 .ph-view img{max-width:96%;max-height:82%;border-radius:10px;}
@@ -588,10 +594,13 @@ DAYS.forEach(function(day,i){
 
 
 
+
+
 <!-- PHOTOS_MODAL -->
 <div class="exp-overlay" id="albOverlay">
   <div class="exp-top"><h2>🖼️ אלבום הטיול</h2><button class="exp-close" id="albClose">✕</button></div>
   <div class="exp-body">
+    <div class="alb-tip">💡 <b>הזרימה המומלצת:</b> לצלם רגיל עם מצלמת הטלפון (כדי שיהיה גיבוי בגלריה), ואז להוסיף את התמונות הטובות דרך <b>"הוסף מהגלריה"</b> בכל יום. המיקום והשעה נלקחים מתוך התמונה עצמה. כדאי ללחוץ "ייצא אלבום" מדי כמה ימים.</div>
     <button class="alb-exp" id="albExport">⬇️ ייצא אלבום (קובץ לשמירה/שיתוף)</button>
     <div id="albContent"></div>
   </div>
@@ -599,7 +608,7 @@ DAYS.forEach(function(day,i){
 <div class="ph-view" id="phView"><button class="x" id="phViewX">✕</button><img id="phViewImg" alt=""><div class="meta" id="phViewMeta"></div></div>
 <script>
 (function(){
-  var DB=null, VIEWURLS=[];
+  var DB=null;
   function openDB(){return new Promise(function(res,rej){
     var r=indexedDB.open('goldfarbTrip',1);
     r.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains('photos'))db.createObjectStore('photos',{keyPath:'id',autoIncrement:true});};
@@ -609,12 +618,75 @@ DAYS.forEach(function(day,i){
   function allPhotos(){return new Promise(function(res,rej){var q=tx('readonly').getAll();q.onsuccess=function(){res(q.result||[]);};q.onerror=function(){rej(q.error);};});}
   function delPhoto(id){return new Promise(function(res){var q=tx('readwrite').delete(id);q.onsuccess=function(){res();};q.onerror=function(){res();};});}
 
-  // ---- all itinerary waypoints for location matching ----
   var SPOTS=[];
-  try{ DAYS.forEach(function(d,i){ d.wps.forEach(function(w){ SPOTS.push({name:w.hotel?'המלון (Schladming)':w.name, lat:w.lat, lng:w.lng}); }); }); }catch(e){}
+  try{ DAYS.forEach(function(d){ d.wps.forEach(function(w){ SPOTS.push({name:w.hotel?'המלון (Schladming)':w.name, lat:w.lat, lng:w.lng}); }); }); }catch(e){}
   function dist(a,b,c,d){var R=6371,p=Math.PI/180;var dA=(c-a)*p,dB=(d-b)*p;var x=Math.sin(dA/2)*Math.sin(dA/2)+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dB/2)*Math.sin(dB/2);return 2*R*Math.asin(Math.sqrt(x));}
   function nearest(lat,lng){var best=null,bd=1e9;SPOTS.forEach(function(s){var d=dist(lat,lng,s.lat,s.lng);if(d<bd){bd=d;best=s;}});return (best&&bd<=6)?best.name:null;}
   function locOf(p){return p.place||((p.lat!=null&&p.lng!=null)?nearest(p.lat,p.lng):null)||('לפי יום: '+p.dayTitle);}
+  window.__tripNearest=nearest;
+
+  // ---- minimal EXIF reader: GPS + DateTimeOriginal ----
+  function readExif(file){return new Promise(function(res){
+    var fr=new FileReader();
+    fr.onload=function(){
+      try{
+        var dv=new DataView(fr.result);
+        if(dv.getUint16(0)!==0xFFD8){return res(null);}
+        var off=2,len=dv.byteLength;
+        while(off+4<len){
+          var marker=dv.getUint16(off);
+          if((marker&0xFF00)!==0xFF00){break;}
+          var size=dv.getUint16(off+2);
+          if(marker===0xFFE1){
+            var start=off+4;
+            if(dv.getUint32(start)!==0x45786966){off+=2+size;continue;}
+            var tiff=start+6;
+            var little=dv.getUint16(tiff)===0x4949;
+            var u16=function(o){return dv.getUint16(o,little);};
+            var u32=function(o){return dv.getUint32(o,little);};
+            if(u16(tiff+2)!==42){return res(null);}
+            var ifd0=tiff+u32(tiff+4);
+            var gpsPtr=null,exifPtr=null,n=u16(ifd0);
+            for(var i=0;i<n;i++){var e=ifd0+2+i*12,tag=u16(e);
+              if(tag===0x8825)gpsPtr=tiff+u32(e+8);
+              if(tag===0x8769)exifPtr=tiff+u32(e+8);}
+            var out={lat:null,lng:null,ts:null};
+            var rat=function(o){var d=u32(o+4);return d?u32(o)/d:0;};
+            var dms=function(o){return rat(o)+rat(o+8)/60+rat(o+16)/3600;};
+            if(gpsPtr){
+              var gn=u16(gpsPtr),latRef=null,lngRef=null,latO=null,lngO=null;
+              for(var j=0;j<gn;j++){var g=gpsPtr+2+j*12,t=u16(g),val=g+8;
+                if(t===1)latRef=String.fromCharCode(dv.getUint8(val));
+                if(t===2)latO=tiff+u32(val);
+                if(t===3)lngRef=String.fromCharCode(dv.getUint8(val));
+                if(t===4)lngO=tiff+u32(val);}
+              if(latO!==null&&lngO!==null){
+                var la=dms(latO),lo=dms(lngO);
+                if(latRef==='S')la=-la; if(lngRef==='W')lo=-lo;
+                if(isFinite(la)&&isFinite(lo)&&(la!==0||lo!==0)){out.lat=la;out.lng=lo;}
+              }
+            }
+            if(exifPtr){
+              var en=u16(exifPtr);
+              for(var k=0;k<en;k++){var x=exifPtr+2+k*12,t2=u16(x),c2=u32(x+4);
+                if(t2===0x9003){
+                  var so=(c2>4)?tiff+u32(x+8):(x+8),s='';
+                  for(var m=0;m<19;m++)s+=String.fromCharCode(dv.getUint8(so+m));
+                  var mm=s.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+                  if(mm)out.ts=new Date(+mm[1],+mm[2]-1,+mm[3],+mm[4],+mm[5],+mm[6]).getTime();
+                }}
+            }
+            return res(out);
+          }
+          off+=2+size;
+        }
+        res(null);
+      }catch(e){res(null);}
+    };
+    fr.onerror=function(){res(null);};
+    fr.readAsArrayBuffer(file.slice(0,512*1024));
+  });}
+  window.__tripReadExif=readExif;
 
   function getPos(){return new Promise(function(res){
     if(!navigator.geolocation)return res(null);
@@ -628,29 +700,43 @@ DAYS.forEach(function(day,i){
       cv.toBlob(function(b){res(b);},'image/jpeg',0.72);
     };im.src=rd.result;};rd.readAsDataURL(file);});}
 
-  // ---- per-day camera UI ----
   function dayLabel(i){try{var p=DAYS[i].title.split(' · ');return p[1]+' · '+p.slice(2).join(' · ');}catch(e){return 'יום '+(i+1);}}
+
   function injectDayUI(){
     var cards=document.querySelectorAll('.day');
     for(var i=0;i<cards.length;i++){(function(card,idx){
       var det=card.querySelector('.day-detail');if(!det||det.querySelector('.ph-box'))return;
       var box=document.createElement('div');box.className='ph-box';
-      box.innerHTML='<button class="ph-cam" type="button">📷 צלם / הוסף תמונה ליום זה</button>'
-        +'<input type="file" accept="image/*" capture="environment" style="display:none">'
+      box.innerHTML='<div class="ph-btns"><button class="ph-b ph-gal" type="button">🖼️ הוסף מהגלריה</button><button class="ph-b ph-shot" type="button">📷 צלם עכשיו</button></div>'
+        +'<input type="file" accept="image/*" multiple class="in-gal" style="display:none">'
+        +'<input type="file" accept="image/*" capture="environment" class="in-cam" style="display:none">'
         +'<div class="ph-strip"></div><div class="ph-cnt"></div>';
       det.appendChild(box);
-      var btn=box.querySelector('.ph-cam'), inp=box.querySelector('input'), strip=box.querySelector('.ph-strip'), cnt=box.querySelector('.ph-cnt');
-      btn.onclick=function(){inp.click();};
-      inp.onchange=function(e){
-        var f=e.target.files[0];if(!f)return;
-        cnt.textContent='שומר תמונה…';
-        Promise.all([compress(f),getPos()]).then(function(a){
-          var blob=a[0],pos=a[1];
-          var rec={dayIdx:idx,dayTitle:dayLabel(idx),ts:Date.now(),lat:pos?pos.lat:null,lng:pos?pos.lng:null,
-                   place:(pos?nearest(pos.lat,pos.lng):null),blob:blob};
-          return addPhoto(rec);
-        }).then(function(){inp.value='';refreshDay(idx,strip,cnt);}).catch(function(err){cnt.textContent='שגיאה בשמירה';});
-      };
+      var strip=box.querySelector('.ph-strip'), cnt=box.querySelector('.ph-cnt');
+      var inGal=box.querySelector('.in-gal'), inCam=box.querySelector('.in-cam');
+      box.querySelector('.ph-gal').onclick=function(){inGal.click();};
+      box.querySelector('.ph-shot').onclick=function(){inCam.click();};
+
+      function save(file,fromCamera){
+        return Promise.all([compress(file), fromCamera?getPos():readExif(file)]).then(function(a){
+          var blob=a[0], info=a[1]||{};
+          var lat=null,lng=null,ts=null;
+          if(fromCamera){ lat=info.lat!=null?info.lat:null; lng=info.lng!=null?info.lng:null; ts=Date.now(); }
+          else { lat=info.lat!=null?info.lat:null; lng=info.lng!=null?info.lng:null; ts=info.ts||file.lastModified||Date.now(); }
+          return addPhoto({dayIdx:idx,dayTitle:dayLabel(idx),ts:ts,lat:lat,lng:lng,
+                           place:(lat!=null?nearest(lat,lng):null),src:fromCamera?'cam':'gal',blob:blob});
+        });
+      }
+      function handle(files,fromCamera){
+        if(!files||!files.length)return;
+        cnt.textContent='שומר '+files.length+' תמונות…';
+        var chain=Promise.resolve();
+        for(var f=0;f<files.length;f++){(function(file){chain=chain.then(function(){return save(file,fromCamera);});})(files[f]);}
+        chain.then(function(){inGal.value='';inCam.value='';refreshDay(idx,strip,cnt);})
+             .catch(function(){cnt.textContent='שגיאה בשמירה';});
+      }
+      inGal.onchange=function(e){handle(e.target.files,false);};
+      inCam.onchange=function(e){handle(e.target.files,true);};
       refreshDay(idx,strip,cnt);
     })(cards[i],i);}
   }
@@ -658,24 +744,25 @@ DAYS.forEach(function(day,i){
     allPhotos().then(function(all){
       var mine=all.filter(function(p){return p.dayIdx===idx;});
       strip.innerHTML='';
-      mine.forEach(function(p){var u=URL.createObjectURL(p.blob);VIEWURLS.push(u);var im=document.createElement('img');im.src=u;im.onclick=function(){showPhoto(u,p);};strip.appendChild(im);});
-      cnt.textContent=mine.length?(mine.length+' תמונות ביום זה'):'עדיין אין תמונות ביום זה';
+      mine.forEach(function(p){var u=URL.createObjectURL(p.blob);var im=document.createElement('img');im.src=u;im.onclick=function(){showPhoto(u,p);};strip.appendChild(im);});
+      var noLoc=mine.filter(function(p){return p.lat==null;}).length;
+      cnt.textContent=mine.length?(mine.length+' תמונות ביום זה'+(noLoc?(' · '+noLoc+' ללא מיקום'):'')):'עדיין אין תמונות ביום זה';
     });
   }
   function showPhoto(url,p){
     document.getElementById('phViewImg').src=url;
     var d=new Date(p.ts);
-    var meta=(p.place?('📍 '+p.place):(p.lat?'📍 מיקום נשמר':'📍 ללא מיקום'))+' · '+d.toLocaleDateString('he-IL')+' '+d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('phViewMeta').textContent=meta;
+    var loc=p.place||((p.lat!=null)?(window.__tripNearest(p.lat,p.lng)||'מחוץ לאזור המסלול'):'ללא מיקום בתמונה');
+    document.getElementById('phViewMeta').textContent='📍 '+loc+' · '+d.toLocaleDateString('he-IL')+' '+d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('phView').classList.add('show');
   }
   document.getElementById('phViewX').onclick=function(){document.getElementById('phView').classList.remove('show');};
 
-  // ---- album grouped by location ----
   function renderAlbum(){
     allPhotos().then(function(all){
       var c=document.getElementById('albContent');c.innerHTML='';
-      if(!all.length){c.innerHTML='<div class="alb-empty">עדיין אין תמונות.<br>פתחו יום ולחצו "📷 צלם / הוסף תמונה".</div>';return;}
+      if(!all.length){c.innerHTML='<div class="alb-empty">עדיין אין תמונות.<br>פתחו יום ולחצו <b>"🖼️ הוסף מהגלריה"</b>.</div>';return;}
+      all.sort(function(a,b){return a.ts-b.ts;});
       var groups={};
       all.forEach(function(p){var k=locOf(p);(groups[k]=groups[k]||[]).push(p);});
       Object.keys(groups).forEach(function(k){
@@ -684,7 +771,7 @@ DAYS.forEach(function(day,i){
         div.innerHTML='<div class="gh"><span>📍 '+k+'</span><span>'+g.length+'</span></div><div class="alb-grid"></div>';
         var grid=div.querySelector('.alb-grid');
         g.forEach(function(p){
-          var u=URL.createObjectURL(p.blob);VIEWURLS.push(u);
+          var u=URL.createObjectURL(p.blob);
           var cell=document.createElement('div');cell.className='cell';
           var im=document.createElement('img');im.src=u;im.onclick=function(){showPhoto(u,p);};
           var rm=document.createElement('button');rm.className='rm';rm.textContent='🗑️';
@@ -698,15 +785,15 @@ DAYS.forEach(function(day,i){
   document.getElementById('albumBtn').onclick=function(){document.getElementById('albOverlay').classList.add('show');renderAlbum();};
   document.getElementById('albClose').onclick=function(){document.getElementById('albOverlay').classList.remove('show');};
 
-  // ---- export album as standalone HTML ----
   function blobToDataURL(b){return new Promise(function(res){var r=new FileReader();r.onload=function(){res(r.result);};r.readAsDataURL(b);});}
   document.getElementById('albExport').onclick=function(){
     var btn=this;btn.textContent='מכין אלבום…';
     allPhotos().then(function(all){
       if(!all.length){btn.textContent='⬇️ ייצא אלבום (קובץ לשמירה/שיתוף)';alert('אין תמונות לייצוא.');return;}
+      all.sort(function(a,b){return a.ts-b.ts;});
       var groups={};all.forEach(function(p){var k=locOf(p);(groups[k]=groups[k]||[]).push(p);});
-      var keys=Object.keys(groups);
-      var jobs=[];keys.forEach(function(k){groups[k].forEach(function(p){jobs.push(blobToDataURL(p.blob).then(function(u){p._u=u;}));});});
+      var keys=Object.keys(groups),jobs=[];
+      keys.forEach(function(k){groups[k].forEach(function(p){jobs.push(blobToDataURL(p.blob).then(function(u){p._u=u;}));});});
       Promise.all(jobs).then(function(){
         var h='<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>אלבום הטיול — גולדפרב אוסטריה 2026</title>'
           +'<style>body{margin:0;font-family:Arial,sans-serif;background:#eef3ec;color:#1a2733}.w{max-width:900px;margin:0 auto;padding:16px}h1{color:#1b5e20;text-align:center}'
