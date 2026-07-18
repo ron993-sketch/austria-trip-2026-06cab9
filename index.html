@@ -133,6 +133,7 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
 
 
 
+
 /* PHOTOS_CSS */
 .album-btn{position:absolute;top:calc(14px + env(safe-area-inset-top));left:116px;width:42px;height:42px;border-radius:12px;border:0;background:rgba(255,255,255,.22);color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .album-btn:active{background:rgba(255,255,255,.36);}
@@ -155,6 +156,9 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
 .alb-exp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#1b5e20;color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px;}
 .alb-empty{text-align:center;color:var(--muted);padding:30px 12px;font-size:14px;line-height:1.8;}
 .alb-tip{background:#fff8e1;border-right:4px solid #f9a825;padding:10px 12px;border-radius:10px;font-size:12.5px;color:#7a5b00;line-height:1.6;margin-bottom:12px;}
+.alb-stat{background:#eef5ee;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#1b5e20;font-weight:700;margin-bottom:10px;text-align:center;line-height:1.7;}
+.alb-warn{background:#ffebee;border-right:4px solid #c62828;color:#b71c1c;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:10px;line-height:1.6;display:none;}
+.alb-warn.show{display:block;}
 .ph-view{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:3000;display:none;align-items:center;justify-content:center;flex-direction:column;}
 .ph-view.show{display:flex;}
 .ph-view img{max-width:96%;max-height:82%;border-radius:10px;}
@@ -596,11 +600,15 @@ DAYS.forEach(function(day,i){
 
 
 
+
+
 <!-- PHOTOS_MODAL -->
 <div class="exp-overlay" id="albOverlay">
   <div class="exp-top"><h2>🖼️ אלבום הטיול</h2><button class="exp-close" id="albClose">✕</button></div>
   <div class="exp-body">
     <div class="alb-tip">💡 <b>הזרימה המומלצת:</b> לצלם רגיל עם מצלמת הטלפון (כדי שיהיה גיבוי בגלריה), ואז להוסיף את התמונות הטובות דרך <b>"הוסף מהגלריה"</b> בכל יום. המיקום והשעה נלקחים מתוך התמונה עצמה. כדאי ללחוץ "ייצא אלבום" מדי כמה ימים.</div>
+    <div class="alb-warn" id="albWarn"></div>
+    <div class="alb-stat" id="albStat">בודק אחסון…</div>
     <button class="alb-exp" id="albExport">⬇️ ייצא אלבום (קובץ לשמירה/שיתוף)</button>
     <div id="albContent"></div>
   </div>
@@ -782,7 +790,34 @@ DAYS.forEach(function(day,i){
       });
     });
   }
-  document.getElementById('albumBtn').onclick=function(){document.getElementById('albOverlay').classList.add('show');renderAlbum();};
+  // ---- durability: persistent storage + usage + backup reminder ----
+  var LASTEXP='goldfarb_last_export';
+  function mb(n){return (n/1048576).toFixed(1)+'MB';}
+  function requestPersist(){try{if(navigator.storage&&navigator.storage.persist)return navigator.storage.persist();}catch(e){}return Promise.resolve(false);}
+  function storageStatus(){
+    var st={persisted:false,usage:0,quota:0};
+    if(!navigator.storage)return Promise.resolve(st);
+    var p1=navigator.storage.persisted?navigator.storage.persisted().then(function(v){st.persisted=v;}).catch(function(){}):Promise.resolve();
+    var p2=navigator.storage.estimate?navigator.storage.estimate().then(function(e){st.usage=e.usage||0;st.quota=e.quota||0;}).catch(function(){}):Promise.resolve();
+    return Promise.all([p1,p2]).then(function(){return st;});
+  }
+  function renderStatus(){
+    var el=document.getElementById('albStat'), warn=document.getElementById('albWarn');
+    Promise.all([storageStatus(),allPhotos()]).then(function(a){
+      var st=a[0], all=a[1];
+      var txt=(st.persisted?'🔒 אחסון מוגן — התמונות לא יימחקו אוטומטית':'⚠️ אחסון לא מוגן — הוסיפו את האפליקציה למסך הבית');
+      if(st.quota)txt+=' · '+mb(st.usage)+' בשימוש מתוך ~'+mb(st.quota);
+      txt+=' · '+all.length+' תמונות';
+      el.textContent=txt;
+      var last=parseInt(localStorage.getItem(LASTEXP)||'0',10);
+      var days=last?((Date.now()-last)/86400000):999;
+      if(all.length&&days>2.5){
+        warn.textContent=last?('⚠️ לא ייצאת גיבוי כבר '+Math.floor(days)+' ימים — כדאי ללחוץ "ייצא אלבום" עכשיו.'):'⚠️ עדיין לא ייצאת גיבוי. כדאי ללחוץ "ייצא אלבום" כדי לשמור עותק מחוץ לאפליקציה.';
+        warn.classList.add('show');
+      } else { warn.classList.remove('show'); }
+    });
+  }
+  document.getElementById('albumBtn').onclick=function(){document.getElementById('albOverlay').classList.add('show');requestPersist().then(renderStatus);renderAlbum();};
   document.getElementById('albClose').onclick=function(){document.getElementById('albOverlay').classList.remove('show');};
 
   function blobToDataURL(b){return new Promise(function(res){var r=new FileReader();r.onload=function(){res(r.result);};r.readAsDataURL(b);});}
@@ -813,7 +848,9 @@ if('serviceWorker' in navigator){window.addEventListener('load',function(){navig
         var url=URL.createObjectURL(new Blob([h],{type:'text/html'}));
         var a=document.createElement('a');a.href=url;a.download='אלבום-הטיול-אוסטריה-2026.html';document.body.appendChild(a);a.click();
         setTimeout(function(){URL.revokeObjectURL(url);a.remove();},4000);
+        try{localStorage.setItem(LASTEXP,String(Date.now()));}catch(e){}
         btn.textContent='⬇️ ייצא אלבום (קובץ לשמירה/שיתוף)';
+        renderStatus();
       });
     });
   };
