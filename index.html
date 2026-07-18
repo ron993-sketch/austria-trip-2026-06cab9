@@ -135,6 +135,10 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
 
 
 
+
+
+
+
 /* PHOTOS_CSS */
 .album-btn{position:absolute;top:calc(14px + env(safe-area-inset-top));left:116px;width:42px;height:42px;border-radius:12px;border:0;background:rgba(255,255,255,.22);color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .album-btn:active{background:rgba(255,255,255,.36);}
@@ -169,6 +173,38 @@ footer{text-align:center;padding:16px;color:#8a978c;font-size:12px;line-height:1
 .ph-saved{color:#a5d6a7;font-size:12px;margin-top:6px;min-height:14px;font-weight:700;}
 .alb-grid .cb{position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;font-size:10px;padding:1px 5px;}
 /* END_PHOTOS_CSS */
+
+/* SITES_CSS */
+.si{margin-top:10px;border-top:1px dashed #dbe6db;padding-top:10px;}
+.si>summary{cursor:pointer;list-style:none;font-weight:800;font-size:13.5px;color:#1b5e20;padding:9px 12px;background:#f1f7f1;border-radius:10px;display:flex;justify-content:space-between;align-items:center;}
+.si>summary::-webkit-details-marker{display:none}
+.si>summary::after{content:"\25be";color:#6b7a6e;transition:transform .2s;}
+.si[open]>summary::after{transform:rotate(180deg);}
+.si-item{padding:11px 4px 4px;border-bottom:1px solid #eef0ee;}
+.si-item:last-child{border-bottom:0;}
+.si-item b{display:block;font-size:14px;color:#1b5e20;margin-bottom:4px;}
+.si-item p{margin:0;font-size:13.5px;line-height:1.75;color:#3a4a3f;}
+.cs{margin-top:10px;border-top:1px dashed #dbe6db;padding-top:10px;}
+.cs-add{width:100%;background:#e8f0fe;border:1px solid #c5ddf7;color:#0d47a1;border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;}
+.cs-add:active{background:#d7e6fb;}
+.cs-form{display:none;background:#fff;border:1px solid #e0e8e0;border-radius:12px;padding:12px;margin-top:8px;}
+.cs-form.show{display:block;}
+.cs-form label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:6px 2px 4px;}
+.cs-form input[type=text]{width:100%;border:1px solid #d7e0d7;border-radius:10px;padding:10px;font-size:16px;font-family:inherit;background:#fafdf8;}
+.cs-geo{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;font-weight:700;color:#3a4a3f;}
+.cs-acts{display:flex;gap:8px;margin-top:10px;}
+.cs-acts button{flex:1;border:0;border-radius:10px;padding:11px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;}
+.cs-save{background:#1b5e20;color:#fff;}
+.cs-cancel{background:#ececec;color:#333;}
+.cs-list{margin-top:8px;display:flex;flex-direction:column;gap:7px;}
+.cs-item{background:#fff;border:1px solid #e6ece6;border-radius:11px;padding:10px 12px;display:flex;align-items:center;gap:10px;}
+.cs-item .nm{flex:1;min-width:0;}
+.cs-item .nm b{display:block;font-size:14px;}
+.cs-item .nm span{font-size:12px;color:var(--muted);}
+.cs-item a{background:#00b3e6;color:#fff;text-decoration:none;border-radius:9px;padding:7px 10px;font-size:12px;font-weight:800;white-space:nowrap;}
+.cs-item button{background:#fde8e8;border:0;color:#c62828;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;}
+.cs-msg{font-size:12px;color:var(--muted);margin-top:6px;text-align:center;min-height:14px;}
+/* END_SITES_CSS */
 </style>
 </head>
 <body>
@@ -608,6 +644,10 @@ DAYS.forEach(function(day,i){
 
 
 
+
+
+
+
 <!-- PHOTOS_MODAL -->
 <div class="exp-overlay" id="albOverlay">
   <div class="exp-top"><h2>🖼️ אלבום הטיול</h2><button class="exp-close" id="albClose">✕</button></div>
@@ -640,7 +680,11 @@ DAYS.forEach(function(day,i){
   var SPOTS=[];
   try{ DAYS.forEach(function(d){ d.wps.forEach(function(w){ SPOTS.push({name:w.hotel?'המלון (Schladming)':w.name, lat:w.lat, lng:w.lng}); }); }); }catch(e){}
   function dist(a,b,c,d){var R=6371,p=Math.PI/180;var dA=(c-a)*p,dB=(d-b)*p;var x=Math.sin(dA/2)*Math.sin(dA/2)+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dB/2)*Math.sin(dB/2);return 2*R*Math.asin(Math.sqrt(x));}
-  function nearest(lat,lng){var best=null,bd=1e9;SPOTS.forEach(function(s){var d=dist(lat,lng,s.lat,s.lng);if(d<bd){bd=d;best=s;}});return (best&&bd<=6)?best.name:null;}
+  function allSpots(){var s=SPOTS.slice();
+    try{var c=JSON.parse(localStorage.getItem('goldfarb_sites')||'[]');
+      c.forEach(function(x){if(x.lat!=null&&x.lng!=null)s.push({name:x.name,lat:x.lat,lng:x.lng});});}catch(e){}
+    return s;}
+  function nearest(lat,lng){var best=null,bd=1e9;allSpots().forEach(function(s){var d=dist(lat,lng,s.lat,s.lng);if(d<bd){bd=d;best=s;}});return (best&&bd<=6)?best.name:null;}
   function locOf(p){return p.place||((p.lat!=null&&p.lng!=null)?nearest(p.lat,p.lng):null)||('לפי יום: '+p.dayTitle);}
   window.__tripNearest=nearest;
 
@@ -873,10 +917,7 @@ DAYS.forEach(function(day,i){
             h+='<figure><img src="'+p._u+'"><figcaption>'+cap+d.toLocaleDateString('he-IL')+' '+d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+'</figcaption></figure>';});
           h+='</div></div>';
         });
-        h+='</div><script>
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
-</script>
-</body></html>';
+        h+='</div></'+'body></html>';
         var url=URL.createObjectURL(new Blob([h],{type:'text/html'}));
         var a=document.createElement('a');a.href=url;a.download='אלבום-הטיול-אוסטריה-2026.html';document.body.appendChild(a);a.click();
         setTimeout(function(){URL.revokeObjectURL(url);a.remove();},4000);
@@ -892,5 +933,88 @@ if('serviceWorker' in navigator){window.addEventListener('load',function(){navig
 </script>
 <!-- END_PHOTOS -->
 
+<!-- SITES_BLOCK -->
+<script>
+(function(){
+  var INFO={"Sporthotel Royer, Schladming": "מלון ספורט 4 כוכבים במרכז שלאדמינג, עם אזור ספא ובריכות (מקורה וחיצונית), חדר כושר ופעילויות לילדים. כאן מקבלים בצ'ק-אין את ה-Sommercard, שמזכה בכניסה חופשית או מוזלת לרכבלים ולאטרקציות באזור.", "שדה התעופה זלצבורג (W.A. Mozart)": "שדה התעופה השני בגודלו באוסטריה, קרוי על שם המלחין וולפגנג אמדאוס מוצרט שנולד בזלצבורג. קטן ונוח לתפעול, כ-4 ק\"מ ממרכז העיר וכשעה ורבע נסיעה משלאדמינג.", "Werfen / מצודת Hohenwerfen": "מצודה מהמאה ה-11 (משנת 1075) הניצבת על צוק בגובה כ-155 מ' מעל עמק הזלצאך, מוקפת בפסגות רכס Tennengebirge. שימשה לאורך הדורות מעוז הגנה, מרכז שלטון ואפילו בית כלא לאצילים. היום היא מוזיאון עם סיורים מודרכים, והאטרקציה הבולטת בה היא מופע ציפורי הטרף — נשרים, בזים וינשופים שעפים מעל הקהל. המצודה שימשה גם כלוקיישן לצילומי סרטים, בהם \"היכן שהנשרים מעזים\".", "Wilde Wasser / Riesachsee (Untertal)": "שמורת \"המים הפראיים\" בעמק Untertal — מהמסלולים היפים באזור שלאדמינג. השביל מטפס לאורך מפלי Riesach (מהגבוהים בשטיריה) ועובר על גשרים תלויים וסולמות מתכת הצמודים לסלע, ממש מעל הנחל הגועש. בסופו נפרש אגם Riesachsee בגובה 1,333 מ', ועל שפתו בקתה הררית שאפשר לאכול בה. למי שמעדיף בלי האתגר — יש מסלול חלופי קל ונעים דרך היער.", "Dachstein Gletscherbahn (Ramsau)": "רכבל שמטפס אל קרחון הדכשטיין לגובה של כ-2,700 מ'. למעלה מחכות ארבע אטרקציות צמודות: \"ארמון הקרח\" — מנהרות ופסלים מגולפים בתוך הקרחון עצמו; ה-Sky Walk — מרפסת תצפית התלויה מעל תהום של כ-250 מ'; הגשר התלוי (Hängebrücke), הגבוה באוסטריה; ו\"המדרגות אל האין\" — מדרגות זכוכית שנגמרות באוויר הפתוח. שימו לב: גם באמצע הקיץ הטמפרטורה שם סביב 0 מעלות.", "THE BEACH Ramsau": "אגם רחצה מטופח ברמסאו, עם חוף דשא רחב, מים בטמפרטורה נעימה, מגלשות ומתקני מים לילדים — והכל על רקע רכס הדכשטיין. שילוב מושלם אחרי בוקר קר על הקרחון.", "קניון Wörschachklamm": "קניון פראי ליד הכפר Wörschach, שבו הולכים על גשרי עץ ומדרגות הצמודים לקירות הסלע, ממש מעל נחל שוצף ומפלים. המסלול אורך כשעה עד שעה וחצי הלוך-חזור, וקריר בתוכו גם בימים החמים. בחלק העליון של הקניון נמצאות חורבות טירת Wolkenstein.", "אגם Putterersee (רחצה)": "אגם רחצה קטן ליד Aigen im Ennstal, מהחמימים והנעימים לשחייה בכל עמק ה-Enns. יש בו חוף דשא, סירות פדל, מגרש משחקים ומזנון — מקום רגוע ומשפחתי לשעות אחר הצהריים.", "קרטינג Hochwurzen": "הר בגובה 1,850 מ' מעל רוהרמוס, עם רכבל ותצפית מצוינת אל רכס הדכשטיין. האטרקציה המרכזית היא הגלישה במורד ההר — מסלול רודלבאן / מאונטן-קארט שבו כל אחד שולט במהירות שלו. כיף אמיתי לכל הגילאים, ומוזל או חינם עם ה-Sommercard.", "KTM Hauthaler (Moosstraße 52a)": "סוכנות ואולם תצוגה של KTM בזלצבורג. KTM היא יצרנית האופנועים האוסטרית הידועה, שמפעל האם שלה שוכן ב-Mattighofen, והיא מהמובילות בעולם באופנועי שטח ומרוצים. במקום אופנועים חדשים, ביגוד רכיבה ואביזרים ממותגים.", "McArthurGlen Designer Outlet Salzburg": "אאוטלט המותגים הגדול באזור זלצבורג, בפרבר Wals ממש ליד שדה התעופה. כ-120 חנויות מותגים במחירים מוזלים (לעיתים עד 70% הנחה) — Nike, Adidas, Boss, Tommy Hilfiger, Guess, Levi's ועוד — לצד בתי קפה ומסעדות. החניה חינם. זכרו לבקש Tax Free על קניות מעל €75.", "Reiteralm (אגמי המראה)": "רכבל Reiteralm מעלה לגובה כ-1,860 מ', ומשם מסלול הליכה קליל-בינוני מוביל אל \"אגמי המראה\" (Spiegelseen) — שני אגמים אלפיניים קטנים שבהם משתקף רכס הדכשטיין על פני המים. זו אחת התמונות המזוהות ביותר עם האזור. ההשתקפות הכי יפה בשעות הבוקר, כשפני המים חלקים ואין רוח.", "קניון Silberkarklamm (רמסאו)": "קניון סלע צר ודרמטי ברמסאו, פתוח למטיילים כבר מאז 1928. הולכים בו על גשרי עץ מעל הנחל וחולפים על פני שני מפלים, ביניהם ה-Schleierfall בגובה כ-70 מ'. באותו מקום נמצאים גם שלושה ממסלולי ה\"קלטרשטייג\" (via ferrata) הפופולריים באזור, כולל מסלול המתאים לנוער. בקצה העליון ממתינה בקתת Silberkarhütte.", "Liechtensteinklamm (St. Johann)": "מהקניונים המרשימים באלפים — נקיק בעומק של עד 300 מ' וברוחב של מטרים בודדים בלבד, שבו זורם נהר גועש בין קירות סלע אדירים. המסלול עובר על גשרים ומדרגות ומגיע עד מפל בגובה כ-50 מ'. הקניון שופץ ונפתח מחדש ב-2021, ונוסף לו גשר תצפית ספירלי מודרני. בפנים קר ולח גם בקיץ — כדאי שכבה נוספת.", "Wasserwelt Amade (Wagrain)": "פארק מים משפחתי בוואגריין, המשלב אזור מקורה ואזור חיצוני: בריכות שחייה, מגלשות, ג'קוזי, פינת פעוטות ובריכה חיצונית מחוממת. פתרון מצוין גם ליום גשום וגם לילדים בכל הגילאים.", "Planai — Hopsiland + פארק חבלים": "Planai הוא ההר הביתי של שלאדמינג (1,906 מ'), ומארח מדי שנה את גביע העולם בסקי. בקיץ עולים ברכבל אל Hopsiland — עולם משחקים לילדים בראש ההר עם כ-30 תחנות מים ומשחק; לצידו Planai Adventure Park, פארק חבלים עם מסלולים בגבהים וברמות שונות; ולרוכבי האופניים יש Bikepark עם מסלולי סינגל במורד.", "אופ' Hopsiland / רכבל Planai": "רכבל Planai פועל גם בימי שלישי (בניגוד לפארק החבלים, שסגור באותו יום), ומעלה אל Hopsiland — עולם המשחקים לילדים בראש ההר. אופציה קלה ונעימה ליום האחרון לפני הטיסה."};
+  var KEY='goldfarb_sites';
+  function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return [];}}
+  function save(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+  function esc(s){return String(s).replace(/</g,'&lt;');}
+  function waze(lat,lng){return 'https://waze.com/ul?ll='+lat+','+lng+'&navigate=yes';}
+
+  var cards=document.querySelectorAll('.day');
+  for(var i=0;i<cards.length;i++){(function(card,idx){
+    var det=card.querySelector('.day-detail'); if(!det||det.querySelector('.si')) return;
+    var anchor=det.querySelector('.tip');
+
+    // ---- site descriptions ----
+    var wps=[]; try{wps=DAYS[idx].wps||[];}catch(e){}
+    var seen={},items='';
+    wps.forEach(function(w){
+      var nm=w.name; if(!nm||seen[nm])return; seen[nm]=1;
+      var d=INFO[nm]; if(!d)return;
+      items+='<div class="si-item"><b>'+esc(nm)+'</b><p>'+d+'</p></div>';
+    });
+    if(items){
+      var si=document.createElement('details'); si.className='si';
+      si.innerHTML='<summary>📖 על המקומות ביום זה</summary>'+items;
+      det.insertBefore(si,anchor);
+    }
+
+    // ---- custom sites ----
+    var cs=document.createElement('div'); cs.className='cs';
+    cs.innerHTML='<button class="cs-add" type="button">➕ הוסף אתר שביקרנו</button>'
+      +'<div class="cs-form">'
+      +'<label>שם המקום</label><input type="text" class="cs-name" placeholder="למשל: מסעדה בכפר / תצפית יפה">'
+      +'<label>הערה (אופציונלי)</label><input type="text" class="cs-note" placeholder="מה היה שם, מה אהבנו…">'
+      +'<div class="cs-geo"><input type="checkbox" class="cs-usegeo" checked><span>📍 שמור את המיקום הנוכחי (מומלץ — מאפשר ניווט חזרה ותיוג תמונות)</span></div>'
+      +'<div class="cs-acts"><button type="button" class="cs-save">שמור</button><button type="button" class="cs-cancel">בטל</button></div>'
+      +'<div class="cs-msg"></div></div>'
+      +'<div class="cs-list"></div>';
+    det.insertBefore(cs,anchor);
+
+    var form=cs.querySelector('.cs-form'), list=cs.querySelector('.cs-list'), msg=cs.querySelector('.cs-msg');
+    var nameI=cs.querySelector('.cs-name'), noteI=cs.querySelector('.cs-note'), geoI=cs.querySelector('.cs-usegeo');
+    cs.querySelector('.cs-add').onclick=function(){form.classList.add('show');nameI.focus();};
+    cs.querySelector('.cs-cancel').onclick=function(){form.classList.remove('show');nameI.value='';noteI.value='';msg.textContent='';};
+    cs.querySelector('.cs-save').onclick=function(){
+      var nm=nameI.value.trim(); if(!nm){nameI.focus();return;}
+      msg.textContent=geoI.checked?'מאתר מיקום…':'שומר…';
+      function store(lat,lng){
+        var a=load();
+        a.push({id:Date.now(),dayIdx:idx,name:nm,note:noteI.value.trim(),lat:lat,lng:lng,ts:Date.now()});
+        save(a);nameI.value='';noteI.value='';form.classList.remove('show');msg.textContent='';render();
+      }
+      if(geoI.checked&&navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          function(p){store(p.coords.latitude,p.coords.longitude);},
+          function(){store(null,null);},
+          {enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+      } else { store(null,null); }
+    };
+    function render(){
+      var mine=load().filter(function(x){return x.dayIdx===idx;});
+      list.innerHTML='';
+      mine.forEach(function(x){
+        var d=document.createElement('div');d.className='cs-item';
+        var sub=(x.note?esc(x.note):'')+(x.lat!=null?(x.note?' · ':'')+'📍 מיקום נשמר':'');
+        d.innerHTML='<div class="nm"><b>'+esc(x.name)+'</b><span>'+sub+'</span></div>'
+          +(x.lat!=null?'<a target="_blank" rel="noopener" href="'+waze(x.lat,x.lng)+'">🚗 נווט</a>':'')
+          +'<button type="button">🗑️</button>';
+        d.querySelector('button').onclick=function(){
+          if(!confirm('למחוק את "'+x.name+'"?'))return;
+          save(load().filter(function(y){return y.id!==x.id;}));render();
+        };
+        list.appendChild(d);
+      });
+    }
+    render();
+  })(cards[i],i);}
+})();
+</script>
+<!-- END_SITES -->
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+</script>
 </body>
-</html>
